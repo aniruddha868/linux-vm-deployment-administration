@@ -1,0 +1,69 @@
+# ==============================================================================
+# Workflow Name : Linux Shell Scripts Quality & Syntax Gate
+# Description   : Continuous Integration validation for Linux administration
+#                 automation scripts using Bash built-in syntax checker (bash -n).
+# Triggers      : Push, Pull Requests to main/master, or manual trigger.
+# Safety Notice : Static code analysis only. Does not touch live cloud infrastructure.
+# ==============================================================================
+
+name: "Linux Scripts Validation"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "scripts/**"
+      - ".github/workflows/shell-validation.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "scripts/**"
+      - ".github/workflows/shell-validation.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-bash-scripts:
+    name: "Validate Bash Scripts (Ubuntu)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "1. Checkout Source Code"
+        uses: actions/checkout@v4
+
+      - name: "2. Set Script Permissions"
+        run: |
+          chmod +x scripts/*.sh
+
+      - name: "3. Syntax Check via bash -n"
+        run: |
+          echo "Running bash syntax validation across all shell scripts..."
+          FAILED=0
+          for script in scripts/*.sh; do
+            echo "Checking: ${script}"
+            if ! bash -n "${script}"; then
+              echo "Error: Syntax check failed on ${script}"
+              FAILED=1
+            fi
+          done
+          if [ "${FAILED}" -ne 0 ]; then
+            echo "One or more scripts failed syntax check!"
+            exit 1
+          fi
+          echo "All Bash scripts passed syntax validation successfully!"
+
+      - name: "4. Execute Non-Destructive Test Runs"
+        run: |
+          echo "Testing non-destructive dry-run executions..."
+          ./scripts/01-system-info.sh
+          ./scripts/02-user-group-management.sh --dry-run
+          ./scripts/03-package-service-setup.sh --dry-run
+          ./scripts/04-disk-process-monitor.sh --threshold 90
+          ./scripts/05-network-connectivity-check.sh

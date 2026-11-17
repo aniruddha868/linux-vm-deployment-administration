@@ -1,0 +1,49 @@
+# ==============================================================================
+# Sample Linux System Configuration: Hardened SSH Daemon (/etc/ssh/sshd_config.d/devops.conf)
+# Description: Production-grade SSH hardening settings for an entry-level DevOps VM.
+# Security Principles Applied:
+#   - Key-based authentication only (disables passwords)
+#   - Root login disabled
+#   - Idle session timeout enforcement
+#   - Restricted authentication attempts to prevent brute-force attacks
+# ==============================================================================
+
+# Port to listen on (Default: 22)
+Port 22
+
+# Address families: enforce IPv4 and IPv6
+AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+
+# Protocol version 2 is standard and secure
+Protocol 2
+
+# Authentication Settings
+# 1. Disable root login directly; require logging in as a standard user with sudo
+PermitRootLogin no
+
+# 2. Enforce Public Key Authentication
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+# 3. Disable Password and Empty Password Authentication
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# 4. Brute-Force & Session Protection
+MaxAuthTries 3
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# 5. Disable unused features to reduce attack surface
+X11Forwarding no
+AllowTcpForwarding no
+AllowAgentForwarding no
+
+# 6. Log verbosity for audit compliance
+LogLevel VERBOSE
+SyslogFacility AUTH

@@ -1,0 +1,23 @@
+# ==============================================================================
+# Sample Drop-In Sudoers Rule (/etc/sudoers.d/devops-engineers)
+# Description: Demonstrates granular, least-privilege sudo delegation.
+# Best Practice: NEVER edit /etc/sudoers directly; place drop-ins in /etc/sudoers.d/
+# and always validate syntax using: sudo visudo -cf /etc/sudoers.d/<filename>
+# ==============================================================================
+
+# User Alias Definition
+User_Alias DEVOPS_ADMINS = %devops
+
+# Command Alias Definitions (Least privilege: specify allowed binaries explicitly)
+Cmnd_Alias SYSTEMD_SERVICE_MGMT = /bin/systemctl status *, \
+                                  /bin/systemctl restart nginx, \
+                                  /bin/systemctl reload nginx, \
+                                  /bin/systemctl restart devops-metrics
+
+Cmnd_Alias LOG_INSPECTION       = /usr/bin/journalctl -u *, \
+                                  /usr/bin/tail -f /var/log/nginx/*, \
+                                  /usr/bin/tail -n * /var/log/syslog
+
+# Rule Assignment: Members of %devops group can manage specific services and logs
+# without requiring the root password, but CANNOT run arbitrary bash commands as root.
+DEVOPS_ADMINS ALL=(ALL) NOPASSWD: SYSTEMD_SERVICE_MGMT, LOG_INSPECTION
